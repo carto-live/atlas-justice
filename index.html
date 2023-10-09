@@ -1,0 +1,1794 @@
+<html>
+	
+	<head>
+		
+		<title>Atlas Justice</title>
+		<link rel="icon" type="image/x-icon" href="images/favicon.png">
+		
+	<!-- CHARGEMENT LEAFLET 1.9 -->
+          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+                integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+                crossorigin=""/>
+          <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+                  integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+                  crossorigin=""></script>
+          
+     <!-- CHARGEMENT SIDE BY SIDE MODIFIE COMPATIBILITE 1.9 -->
+          <script src='packages/leaflet-side-by-side.js'></script>
+          
+     <!-- CHARGEMENT PACKAGE FULLSCREEN -->
+          <link rel="stylesheet" href="packages/Control.FullScreen.css" />
+          <script src="packages/Control.FullScreen.js"></script>
+          
+     <!-- CHARGEMENT AJAX -->
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js" ></script>
+          
+     <!-- CHARGEMENT JQUERY -->
+          <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+          
+     <!-- CSS -->
+          <style>
+               
+          /* structure générale avec en-tete, interface carto centrale, et deux colonnes */
+               body {background-color: black ; }
+               #entete { height: 8% ; max-height: 8%; width : 100% ; background-color: black; color: white;}
+               #leftmenu { height: 90%; width: 15%; left:0; top:10%; position:fixed; overflow-y : scroll;}
+               #map { height: 90%; width: 70%; left:15%; right: 15%; top:10%; position:absolute}
+               #rightmenu { height: 90%; width: 15%; right : 0; top:10%; position:absolute; overflow-y : scroll;}
+               
+          /* ajouts de titres l'interface carto */
+               #infotextleft, #infotextright {font-size: 1.5em; background: white; opacity: 0.9; font-weight: bold; cursor: grab;}
+			#infotextright {text-align: right;}
+               .leaflet-control-scale, .leaflet-interactive {cursor: grab;}
+               
+          /* style texte */
+               h1, h2, h3, h4, h5 {margin-top: 0; margin-bottom: 0; font-family: sans-serif; color: white;}
+               h1 {font-size: 1.5em ; text-align: center; cursor: default;}
+			h2 {font-size: 0.8em ; text-align: right; cursor: default;}
+               h5 {font-weight: lighter;}
+               
+          /* contenu des menus gauche et droite */
+               #tableleftmenu {width: 100%; padding-left: 5%; padding-right: 5%; text-align: left; }
+               #tablerightmenu {width: 100%; padding-left: 5%; padding-right: 5%; text-align: right; }
+               td .menucontent { background-color: gray; cursor: pointer;}
+               td .menutext, td .menuexception {font-size: 0.85em; background: white; opacity: 0.8; /*padding-left: 1%; padding-right: 1%; */font-family: sans-serif; vertical-align: middle;}
+			
+          /* panneau additionnel couches supplémentaires */
+               #sidepanel { height: 100%; width: 0; position: fixed; z-index: 1; top: 0; right: 0; background-color: #111; overflow-x: hidden; padding-top: 5%; transition: 0.5s; }
+               
+          /* bouton fermeture panneau supplémentaire légende */
+               #sidepanel a {padding: 8px 8px 8px 32px; text-decoration: none; font-size: 25px; color: #818181; display: block; transition: 0.3s;}
+               #sidepanel a:hover {color: #f1f1f1;}
+               #sidepanel .closebtn { position: absolute; top: 0; right: 2.5%; font-size: 2em; margin-left: 50px;}
+               
+          /* bouton légende en haut à droite */
+               #entete a {float: right;display: block;color: #f2f2f2;text-align: right;padding: 2% 4%;margin-right: 1%;text-decoration: none;line-height: 0.8;background-color: #333;}
+               #entete a:hover {background-color: #ddd;color: white;}
+               #entete a.active {background-color: #4CAF50;color: white;}
+			
+			#buttonlangueDEtoFR {display: none ;}
+			
+			.modalitelegende {padding-top: 5%;}
+			
+			.menucontent {background-size: cover;background-position: center left;}
+			
+			.leaflet-control-attribution {font-size: 0.8em; background: rgba(255, 255, 255, 0.8);}
+			
+			
+			
+			.info { padding: 6px 8px; font: 16px/20px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; cursor: grab;} .info h4 { margin: 0 0 5px; color: #777; cursor: grab;} .legend { text-align: left; line-height: 20px; color: #555; cursor: grab;} .legend i { width: 20px; height: 20px; float: left; margin-right: 8px; opacity: 0.7; cursor: grab;} 
+          
+          </style>
+     
+     </head>
+     
+     <body onload="initialbuttons()">
+          
+     <!-- En-tête de la page -->
+          
+          <div id="entete">
+               <table style="width: 100%;"><tbody><tr>
+                    <td style="width: 15%" id="boutongauche"><h2></h2></td>
+                    <td style="width: 70%" id="headertitle"><h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>CAF&nbsp;Heyritz</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1></td>
+				
+				
+                    <td style="width: 15%" id="boutondroit"><h2 onclick="openNav()" style="color:lightgrey">&#9632;&nbsp;Additional&nbsp;layers&nbsp;&#9632;</h2></td>
+                    </tbody></table>
+          </div>
+		
+          
+     <!-- Menu couches de gauche -->  
+          
+          <div id="leftmenu">
+               
+                <table id="tableleftmenu">
+                     <tbody>
+					 <tr><td><h2 style="text-align: center"><br>Choose&nbsp;the&nbsp;destination</h2></td>
+					 </tr>
+					 <tr><td><br></td></tr> 
+					<tr><td id="buttonCAFHE" onclick="CAFHE()">
+						 <div class="menucontent" style="background-image:url('images/CAFHE.JPG')"><div class="menutext">CAF Heyritz</div></div>
+					</td></tr> 
+					<tr><td><br></td></tr> 
+					 
+					<tr><td id="buttonRHENA" onclick="RHENA()">
+                              <div class="menucontent" style="background-image:url('images/RHENA.jpg')"><div class="menutext">Clinique Rh&eacute;na</div></div>
+                         </td></tr>
+                         <tr><td><br></td></tr> 
+					 
+                         <tr><td id="buttonDJANG" onclick="DJANG()">
+                              <div class="menucontent" style="background-image:url('images/DJANG.jpg')"><div class="menutext">Espace Django Reinhardt</div></div>
+                         </td></tr> 
+					 <tr><td><br></td></tr> 
+					 
+					<tr><td id="buttonGAREC" onclick="GAREC()">
+                              <div class="menucontent" style="background-image:url('images/GAREC.jpg')"><div class="menutext">Gare centrale</div></div>
+                         </td></tr>
+					 <tr><td><br></td></tr> 
+					 
+					<tr><td id="buttonHOPIT" onclick="HOPIT()">
+                              <div class="menucontent" style="background-image:url('images/HOPIT.jpg')"><div class="menutext">H&#244;pital de Hautepierre</div></div>
+                         </td></tr>
+					 <tr><td><br></td></tr> 
+					 
+					 
+					<tr><td id="buttonVAISS" onclick="VAISS()">
+						 <div class="menucontent" style="background-image:url('images/VAISS.jpg')"><div class="menutext">Le Vaisseau</div></div>
+					</td></tr>
+					 <tr><td><br></td></tr> 
+					 
+					<tr><td id="buttonMEDIA" onclick="MEDIA()">
+                              <div class="menucontent" style="background-image:url('images/MEDIA.jpg')"><div class="menutext">M&eacute;diath&egrave;que Malraux</div></div>
+                         </td></tr>
+					 <tr><td><br></td></tr> 
+                         
+                         <tr><td id="buttonORANG" onclick="ORANG()">
+                              <div class="menucontent" style="background-image:url('images/ORANG.jpg')"><div class="menutext">Parc de l&rsquo;Orangerie</div></div>
+                         </td></tr>
+					 <tr><td><br></td></tr> 
+					 
+					<tr><td id="buttonINNOV" onclick="INNOV()">
+                              <div class="menucontent" style="background-image:url('images/INNOV.jpg')"><div class="menutext">Parc d&rsquo;Innovation Illkirch</div></div>
+                         </td></tr>
+					 <tr><td><br></td></tr> 
+					 
+					<tr><td id="buttonPNATU" onclick="PNATU()">
+                              <div class="menucontent" style="background-image:url('images/PNATU.jpg')"><div class="menutext">Parc Naturel Urbain Ill-Bruche</div></div>
+                         </td></tr>
+					 <tr><td><br></td></tr> 
+                         
+					<tr><td id="buttonPISCI" onclick="PISCI()">
+                              <div class="menucontent" style="background-image:url('images/PISCI.jpg')"><div class="menutext">Piscine de Schiltigheim</div></div>
+                         </td></tr>
+					 <tr><td><br></td></tr> 
+					 
+					<tr><td id="buttonKLEBE" onclick="KLEBE()">
+                              <div class="menucontent" style="background-image:url('images/KLEBE.jpg')"><div class="menutext">Place Kl&eacute;ber</div></div>
+                         </td></tr>
+					 <tr><td><br></td></tr> 
+					 
+					<tr><td id="buttonSTADE" onclick="STADE()">
+                              <div class="menucontent" style="background-image:url('images/STADE.jpg')"><div class="menutext">Stade de la Meinau</div></div>
+                         </td></tr>
+					 <tr><td><br></td></tr> 
+					 
+					<tr><td id="buttonZENIT" onclick="ZENIT()">
+                              <div class="menucontent" style="background-image:url('images/ZENIT.png')"><div class="menutext">Z&eacute;nith</div></div>
+                         </td></tr> 
+					 <tr><td><br></td></tr> 
+					 
+					<tr><td id="buttonZCOMM" onclick="ZCOMM()">
+                              <div class="menucontent" style="background-image:url('images/ZCOMM.jpg')"><div class="menutext">Zone commerciale de Vendenheim</div></div>
+                         </td></tr>
+					 
+					
+                    </tbody>
+               </table>
+              
+
+              
+          </div>
+          
+     <!-- Interface cartographique --> 
+          
+          <div id="map"></div>
+          
+     <!-- Menu couches de droite -->      
+          
+          <div id="rightmenu">
+               
+                <table id="tablerightmenu">
+                    <tbody>
+					
+					
+                         <tr><td><h2 style="text-align: center"><br>Choose&nbsp;the&nbsp;constraint</h2></td>
+					 </tr>
+					 <tr><td><br></td></tr> 
+					
+					<tr><td id="contrainteNOBUS">
+                              <div class="menucontent"><div class="menutext">No bus</div><br><button id="contrainteNOBUSbrut" >&nbsp;Total&nbsp;time&nbsp;comparison</button><br><button id="contrainteNOBUSdiff" >&nbsp;Additional&nbsp;time&nbsp;needed&nbsp;</button></div>
+                         </td></tr> 
+					<tr><td><br></td></tr>
+					
+					<tr><td id="contrainteNOTRAM">
+                              <div class="menucontent"><div class="menutext">No tram</div><br><button id="contrainteNOTRAMbrut" >&nbsp;Total&nbsp;time&nbsp;comparison</button><br><button id="contrainteNOTRAMdiff" >&nbsp;Additional&nbsp;time&nbsp;needed&nbsp;</button></div>
+                         </td></tr> 
+					<tr><td><br></td></tr>
+					
+					
+					<tr><td id="contrainteNOTRANS">
+                              <div class="menucontent"><div class="menutext">No trans</div><br><button id="contrainteNOTRANSbrut" >&nbsp;Total&nbsp;time&nbsp;comparison</button><br><button id="contrainteNOTRANSdiff" >&nbsp;Additional&nbsp;time&nbsp;needed&nbsp;</button></div>
+                         </td></tr> 
+					<tr><td><br></td></tr>
+					
+                         
+                         
+                    </tbody>
+               </table>
+               
+               
+               
+          </div>
+          
+          
+          <div id="sidepanel">
+               
+               <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+               
+               
+			
+			<h3 style="margin-left: 4%;" id="titrelignes">Public transport lines</h3>
+			<br>
+			
+			
+			<table id="checkboxeslignes" style="width: 10%; margin-left: 4%;">
+                    <tbody>
+                         <tr>
+                              <td style="width: 3%; color: #556b2f; font-size: 1.5em; vertical-align: middle; padding-bottom: 5%;"><input type="checkbox" id="checkboxlignesTRAIN" onchange="functionlignesTRAIN()"></td>
+                              <td style="width: 7%; vertical-align: middle;"><h5 id="">Show&nbsp;train&nbsp;lines&nbsp;&nbsp;&nbsp;</h5></td>
+                         </tr>
+					<tr><td><br></td></tr>
+					<tr>
+                              <td style="width: 3%; color: #556b2f; font-size: 1.5em; vertical-align: middle; padding-bottom: 5%;"><input type="checkbox" id="checkboxlignesTRAM" onchange="functionlignesTRAM()"></td>
+                              <td style="width: 7%; vertical-align: middle;"><h5 id="">Show&nbsp;tramway&nbsp;lines&nbsp;&nbsp;&nbsp;</h5></td>
+                         </tr>
+					<tr><td><br></td></tr>			
+					<tr>
+                              <td style="width: 3%; color: #556b2f; font-size: 1.5em; vertical-align: middle; padding-bottom: 5%;"><input type="checkbox" id="checkboxlignesBUS" onchange="functionlignesBUS()"></td>
+						<td style="width: 7%; vertical-align: middle;"><h5 id="">Show&nbsp;bus&nbsp;lines&nbsp;&nbsp;&nbsp;</h5></td>
+                         </tr>
+                         
+					
+					
+                    </tbody>
+               </table>
+               
+               <br>
+               
+			<h3 style="margin-left: 4%;" id="titrelignes">Other geographic information</h3>
+			<br>
+			
+			<table id="checkboxeslignes" style="width: 10%; margin-left: 4%;">
+                    <tbody>
+                         <tr>
+                              <td style="width: 3%; color: #556b2f; font-size: 1.5em; vertical-align: middle; padding-bottom: 5%;"><input type="checkbox" id="checkboxlimitesCOMMUNES" onchange="functionlimitesCOMMUNES()"></td>
+                              <td style="width: 7%; vertical-align: middle;"><h5 id="">Show&nbsp;municipal&nbsp;limits&nbsp;&nbsp;&nbsp;</h5></td>
+                         </tr>
+					<tr><td><br></td></tr>
+					
+					<tr>
+                              <td style="width: 3%; color: #556b2f; font-size: 1.5em; vertical-align: middle; padding-bottom: 5%;"><input type="checkbox" id="checkboxlimitesQPV" onchange="functionlimitesQPV()"></td>
+                              <td style="width: 7%; vertical-align: middle;"><h5 id="">Show&nbsp;QPV&nbsp;limits&nbsp;&nbsp;&nbsp;</h5></td>
+                         </tr>
+					
+                   
+                    </tbody>
+               </table>
+			
+               
+          
+          </div>
+          
+          
+          <script>
+               
+			
+		
+			
+			
+               // interface carto centrée sur stras, deux volets gauche et droite
+               var map = L.map('map', {maxZoom: 17, minZoom: 11,zoomControl: false}).setView([48.58, 7.749], 13)
+			//.setMaxBounds(bounds)
+			;
+			
+               
+			map.createPane('left');
+               map.createPane('right');
+			map.createPane('bus');
+			map.createPane('tram');
+			map.createPane('train');
+			map.createPane('QPV');
+			map.createPane('communes');
+			map.createPane('EMS');
+			
+			var baseMap = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.{ext}', {
+				minZoom: 0,maxZoom: 20,
+				attribution: '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+				ext: 'png'
+			}).addTo(map);
+			
+			var baseMapIndex = {
+				"BaseMap": baseMap
+			};
+               
+               
+               
+               
+               
+            
+               
+
+               
+               
+                 
+			
+			// Configuration de la gamme de couleur brute 
+			
+			function getColorBrut(d) {
+				return d > 120 ? '#3f007d' : // plus de 2h
+				d > 90  ? '#54278f' : // 1h30 à 2h
+				d > 60  ? '#6a51a3' : // 1h à 1h30
+				d > 45   ? '#807dba' : // 45 min à 1h
+				d > 30   ? '#9e9ac8' : // 30 à 45 min
+				d > 20   ? '#bcbddc' : // 20 à 30 min
+				d > 10   ? '#dadaeb' : // 10 à 20 min
+				d > 0 ? '#efedf5' : // moins de 10 min
+				'#ffffff' ; // pile "0" minute
+			}
+			
+			function getColorDiff(d) {
+				return d > 30 ? '#8c2d04' : // plus de 30 min de plus
+				d > 25   ? '#d94801' : // plus de 25 min de plus
+				d > 20   ? '#f16913' : // plus de 20 min de plus
+				d > 15   ? '#fd8d3c' : // plus de 15 min de plus
+				d > 10   ? '#fdae6b' : // plus de 10 min de plus
+				d > 5   ? '#fdd0a2' : // plus de 5 min de plus
+				d > 0 ? '#fee6ce' : // moins de 5 min de plus
+				'#ffffff' ; // pile "0" minute
+			}
+			
+			// Affichage classique de chaque unité spatiale 
+            
+			function stylevalide(feature) {
+				return {
+					weight: 0.5, // bordure 
+					opacity: 1, 
+					color: getColorBrut(feature.properties.GenFin),
+					fillOpacity: 0.80, // opacité de la couleur de remplissage 
+					fillColor: getColorBrut(feature.properties.GenFin)
+				};
+			}
+			
+			
+			 function stylerightnobusbrut(feature) {
+				return {
+					weight: 0.5, // bordure 
+					opacity: 1, 
+					color: getColorBrut(feature.properties.NoBus),
+					fillOpacity: 0.80, // opacité de la couleur de remplissage 
+					fillColor: getColorBrut(feature.properties.NoBus)
+				};
+			}
+			
+			function stylerightnobusdiff(feature) {
+				return {
+					weight: 0.5, // bordure 
+					opacity: 1, 
+					color: getColorDiff(feature.properties.NoBus - feature.properties.GenFin),
+					fillOpacity: 0.80, // opacité de la couleur de remplissage 
+					fillColor: getColorDiff(feature.properties.NoBus - feature.properties.GenFin)
+				};
+			}
+	        
+	        
+			
+			 function stylerightnotrambrut(feature) {
+				return {
+					weight: 0.5, // bordure 
+					opacity: 1, 
+					color: getColorBrut(feature.properties.NoTram),
+					fillOpacity: 0.80, // opacité de la couleur de remplissage 
+					fillColor: getColorBrut(feature.properties.NoTram)
+				};
+			}
+			
+			function stylerightnotramdiff(feature) {
+				return {
+					weight: 0.5, // bordure 
+					opacity: 1, 
+					color: getColorDiff(feature.properties.NoTram - feature.properties.GenFin),
+					fillOpacity: 0.80, // opacité de la couleur de remplissage 
+					fillColor: getColorDiff(feature.properties.NoTram - feature.properties.GenFin)
+				};
+			}
+			
+			function stylerightnotransbrut(feature) {
+				return {
+					weight: 0.5, // bordure 
+					opacity: 1, 
+					color: getColorBrut(feature.properties.NoTrans),
+					fillOpacity: 0.80, // opacité de la couleur de remplissage 
+					fillColor: getColorBrut(feature.properties.NoTrans)
+				};
+			}
+			
+			function stylerightnotransdiff(feature) {
+				return {
+					weight: 0.5, // bordure 
+					opacity: 1, 
+					color: getColorDiff(feature.properties.NoTrans - feature.properties.GenFin),
+					fillOpacity: 0.80, // opacité de la couleur de remplissage 
+					fillColor: getColorDiff(feature.properties.NoTrans - feature.properties.GenFin)
+				};
+			}
+	        
+	  
+	        
+	  
+           
+            
+               
+
+			var geojsonleftCAFHE = new L.GeoJSON.AJAX("sources/CAFHE.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2).addTo(map);
+			var markerCAFHE = L.marker([48.57367,7.74892]).addTo(map);
+			
+			var geojsonleftRHENA = new L.GeoJSON.AJAX("sources/RHENA.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerRHENA = L.marker([48.57136,7.79379]);
+			
+			var geojsonleftDJANG = new L.GeoJSON.AJAX("sources/DJANG.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerDJANG = L.marker([48.54605,7.76746]);
+			
+			var geojsonleftGAREC = new L.GeoJSON.AJAX("sources/GAREC.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerGAREC = L.marker([48.58487,7.73498]);
+			
+			var geojsonleftHOPIT = new L.GeoJSON.AJAX("sources/HOPIT.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerHOPIT = L.marker([48.59269,7.70729]);
+			
+			var geojsonleftVAISS = new L.GeoJSON.AJAX("sources/VAISS.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerVAISS = L.marker([48.57265,7.77142]);
+			
+			var geojsonleftMEDIA = new L.GeoJSON.AJAX("sources/MEDIA.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerMEDIA = L.marker([48.57444,7.75943]);
+			
+			var geojsonleftORANG = new L.GeoJSON.AJAX("sources/ORANG.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerORANG = L.marker([48.59164,7.77592]);
+			
+			var geojsonleftINNOV = new L.GeoJSON.AJAX("sources/INNOV.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerINNOV = L.marker([48.52225,7.73807]);
+			
+			var geojsonleftPNATU = new L.GeoJSON.AJAX("sources/PNATU.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerPNATU = L.marker([48.57002,7.71377]);
+			
+			var geojsonleftPISCI = new L.GeoJSON.AJAX("sources/PISCI.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerPISCI = L.marker([48.61226,7.72955]);
+			
+			var geojsonleftKLEBE = new L.GeoJSON.AJAX("sources/KLEBE.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerKLEBE = L.marker([48.58338,7.74586]);
+			
+			var geojsonleftSTADE = new L.GeoJSON.AJAX("sources/STADE.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerSTADE = L.marker([48.56002,7.75334]);
+			
+			var geojsonleftZENIT = new L.GeoJSON.AJAX("sources/ZENIT.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerZENIT = L.marker([48.59324,7.68805]);
+			
+			var geojsonleftZCOMM = new L.GeoJSON.AJAX("sources/ZCOMM.geojson", {
+				style: stylevalide,
+				pane: 'left'
+			}).setZIndex(2);
+			var markerZCOMM = L.marker([48.65515,7.72589]);
+			
+			
+			
+			
+			var geojsonnobusbrutCAFHE = new L.GeoJSON.AJAX("sources/CAFHE.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2).addTo(map);
+			
+			var geojsonnobusdiffCAFHE = new L.GeoJSON.AJAX("sources/CAFHE.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutRHENA = new L.GeoJSON.AJAX("sources/RHENA.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffRHENA = new L.GeoJSON.AJAX("sources/RHENA.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutDJANG = new L.GeoJSON.AJAX("sources/DJANG.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffDJANG = new L.GeoJSON.AJAX("sources/DJANG.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutGAREC = new L.GeoJSON.AJAX("sources/GAREC.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffGAREC = new L.GeoJSON.AJAX("sources/GAREC.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutHOPIT = new L.GeoJSON.AJAX("sources/HOPIT.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffHOPIT = new L.GeoJSON.AJAX("sources/HOPIT.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutVAISS = new L.GeoJSON.AJAX("sources/VAISS.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffVAISS = new L.GeoJSON.AJAX("sources/VAISS.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutMEDIA = new L.GeoJSON.AJAX("sources/MEDIA.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffMEDIA = new L.GeoJSON.AJAX("sources/MEDIA.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutORANG = new L.GeoJSON.AJAX("sources/ORANG.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffORANG = new L.GeoJSON.AJAX("sources/ORANG.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutINNOV = new L.GeoJSON.AJAX("sources/INNOV.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffINNOV = new L.GeoJSON.AJAX("sources/INNOV.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutPNATU = new L.GeoJSON.AJAX("sources/PNATU.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffPNATU = new L.GeoJSON.AJAX("sources/PNATU.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutPISCI = new L.GeoJSON.AJAX("sources/PISCI.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffPISCI = new L.GeoJSON.AJAX("sources/PISCI.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutKLEBE = new L.GeoJSON.AJAX("sources/KLEBE.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffKLEBE = new L.GeoJSON.AJAX("sources/KLEBE.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutSTADE = new L.GeoJSON.AJAX("sources/STADE.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffSTADE = new L.GeoJSON.AJAX("sources/STADE.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutZENIT = new L.GeoJSON.AJAX("sources/ZENIT.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffZENIT = new L.GeoJSON.AJAX("sources/ZENIT.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusbrutZCOMM = new L.GeoJSON.AJAX("sources/ZCOMM.geojson", {
+				style: stylerightnobusbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnobusdiffZCOMM = new L.GeoJSON.AJAX("sources/ZCOMM.geojson", {
+				style: stylerightnobusdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			var geojsonnotrambrutCAFHE = new L.GeoJSON.AJAX("sources/CAFHE.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffCAFHE = new L.GeoJSON.AJAX("sources/CAFHE.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutRHENA = new L.GeoJSON.AJAX("sources/RHENA.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffRHENA = new L.GeoJSON.AJAX("sources/RHENA.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutDJANG = new L.GeoJSON.AJAX("sources/DJANG.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffDJANG = new L.GeoJSON.AJAX("sources/DJANG.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutGAREC = new L.GeoJSON.AJAX("sources/GAREC.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffGAREC = new L.GeoJSON.AJAX("sources/GAREC.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutHOPIT = new L.GeoJSON.AJAX("sources/HOPIT.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffHOPIT = new L.GeoJSON.AJAX("sources/HOPIT.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutVAISS = new L.GeoJSON.AJAX("sources/VAISS.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffVAISS = new L.GeoJSON.AJAX("sources/VAISS.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutMEDIA = new L.GeoJSON.AJAX("sources/MEDIA.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffMEDIA = new L.GeoJSON.AJAX("sources/MEDIA.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutORANG = new L.GeoJSON.AJAX("sources/ORANG.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffORANG = new L.GeoJSON.AJAX("sources/ORANG.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutINNOV = new L.GeoJSON.AJAX("sources/INNOV.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffINNOV = new L.GeoJSON.AJAX("sources/INNOV.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutPNATU = new L.GeoJSON.AJAX("sources/PNATU.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffPNATU = new L.GeoJSON.AJAX("sources/PNATU.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutPISCI = new L.GeoJSON.AJAX("sources/PISCI.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffPISCI = new L.GeoJSON.AJAX("sources/PISCI.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutKLEBE = new L.GeoJSON.AJAX("sources/KLEBE.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffKLEBE = new L.GeoJSON.AJAX("sources/KLEBE.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutSTADE = new L.GeoJSON.AJAX("sources/STADE.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffSTADE = new L.GeoJSON.AJAX("sources/STADE.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutZENIT = new L.GeoJSON.AJAX("sources/ZENIT.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffZENIT = new L.GeoJSON.AJAX("sources/ZENIT.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotrambrutZCOMM = new L.GeoJSON.AJAX("sources/ZCOMM.geojson", {
+				style: stylerightnotrambrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotramdiffZCOMM = new L.GeoJSON.AJAX("sources/ZCOMM.geojson", {
+				style: stylerightnotramdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			
+			
+			
+			var geojsonnotransbrutCAFHE = new L.GeoJSON.AJAX("sources/CAFHE.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffCAFHE = new L.GeoJSON.AJAX("sources/CAFHE.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutRHENA = new L.GeoJSON.AJAX("sources/RHENA.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffRHENA = new L.GeoJSON.AJAX("sources/RHENA.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutDJANG = new L.GeoJSON.AJAX("sources/DJANG.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffDJANG = new L.GeoJSON.AJAX("sources/DJANG.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutGAREC = new L.GeoJSON.AJAX("sources/GAREC.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffGAREC = new L.GeoJSON.AJAX("sources/GAREC.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutHOPIT = new L.GeoJSON.AJAX("sources/HOPIT.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffHOPIT = new L.GeoJSON.AJAX("sources/HOPIT.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutVAISS = new L.GeoJSON.AJAX("sources/VAISS.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffVAISS = new L.GeoJSON.AJAX("sources/VAISS.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutMEDIA = new L.GeoJSON.AJAX("sources/MEDIA.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffMEDIA = new L.GeoJSON.AJAX("sources/MEDIA.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutORANG = new L.GeoJSON.AJAX("sources/ORANG.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffORANG = new L.GeoJSON.AJAX("sources/ORANG.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutINNOV = new L.GeoJSON.AJAX("sources/INNOV.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffINNOV = new L.GeoJSON.AJAX("sources/INNOV.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutPNATU = new L.GeoJSON.AJAX("sources/PNATU.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffPNATU = new L.GeoJSON.AJAX("sources/PNATU.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutPISCI = new L.GeoJSON.AJAX("sources/PISCI.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffPISCI = new L.GeoJSON.AJAX("sources/PISCI.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutKLEBE = new L.GeoJSON.AJAX("sources/KLEBE.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffKLEBE = new L.GeoJSON.AJAX("sources/KLEBE.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutSTADE = new L.GeoJSON.AJAX("sources/STADE.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffSTADE = new L.GeoJSON.AJAX("sources/STADE.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutZENIT = new L.GeoJSON.AJAX("sources/ZENIT.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffZENIT = new L.GeoJSON.AJAX("sources/ZENIT.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransbrutZCOMM = new L.GeoJSON.AJAX("sources/ZCOMM.geojson", {
+				style: stylerightnotransbrut,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			var geojsonnotransdiffZCOMM = new L.GeoJSON.AJAX("sources/ZCOMM.geojson", {
+				style: stylerightnotransdiff,
+				pane: 'right'
+			}).setZIndex(2);
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+               var leftlegend = L.control({position: 'bottomleft'});
+			
+			leftlegend.onAdd = function (map) {
+				
+				var div = L.DomUtil.create('div', 'info legend'),
+				    grades = [0, 10, 20, 30, 45, 60, 90, 120],
+				    labels = [];
+				
+				div.innerHTML += "<h4>Total access time<br>in minutes</h4>"
+				
+				// loop through our density intervals and generate a label with a colored square for each interval
+				for (var i = 0; i < grades.length; i++) {
+					
+					div.innerHTML +=
+						'<i style="background:' + getColorBrut(grades[i] + 1) + '"></i> ' +
+						grades[i] + (grades[i + 1] ? ' - ' + grades[i + 1] + '<br>' : ' and &#x2B;');
+				}
+				return div;
+			};
+			leftlegend.addTo(map);
+               
+      
+              
+               
+               var rightlegend = L.control({position: 'bottomright'});
+			
+			rightlegend.onAdd = function (map) {
+				
+				var div = L.DomUtil.create('div', 'info legend'),
+				    grades = [0, 5, 10, 15, 20, 25, 30],
+				    labels = [];
+				
+				div.innerHTML += "<h4>Additionnal time<br>needed in minutes</h4>"
+				
+				// loop through our density intervals and generate a label with a colored square for each interval
+				for (var i = 0; i < grades.length; i++) {
+					div.innerHTML +=
+						'<i style="background:' + getColorDiff(grades[i] + 1) + '"></i> ' +
+						grades[i] + (grades[i + 1] ? ' - ' + grades[i + 1] + '<br>' : ' and &#x2B;');
+				}
+				return div;
+			};
+			rightlegend;
+               
+			
+			
+			
+               
+               
+      var catedralVieja =
+    "",
+  imageBounds = [
+    [7.9409, -131.1589],
+    [29.2144, -82.6558]
+  ];
+var leftLayer = L.imageOverlay(catedralVieja, imageBounds, {
+  pane: 'left'
+}).addTo(map);
+
+var catedralNueva = "",
+  imageBounds = [
+    [7.9409, -131.1589],
+    [29.2144, -82.6558]
+  ];
+var rightLayer = L.imageOverlay(catedralNueva, imageBounds, {
+  pane: 'right'
+}).addTo(map);
+
+    
+L.control.sideBySide(leftLayer, rightLayer).addTo(map);
+     
+               L.control.zoom({
+    position: 'bottomleft'
+}).addTo(map);
+               
+               
+L.control.scale({
+    position: 'bottomright',
+	imperial : false
+}).addTo(map);
+
+
+               L.Control.textbox1 = L.Control.extend({
+                    onAdd: function(map) {
+                         var text = L.DomUtil.create('div');
+                         text.id = "infotextleft";
+                         text.innerHTML = "Left part of the map:<br>user with no constraint"
+                         return text;
+                    },
+                    onRemove: function(map) {
+                         // Nothing to do here
+                    }
+               });
+               L.control.textbox1 = function(opts) { return new L.Control.textbox1(opts);}
+               L.control.textbox1({ position: 'topleft' }).addTo(map);
+               
+               L.Control.textbox2 = L.Control.extend({
+                    onAdd: function(map) {
+                         var text = L.DomUtil.create('div');
+                         text.id = "infotextright";
+                         text.innerHTML = "Right part of the map:<br>user with constraint &#39;no bus&#39;"
+                         return text;
+                    },
+                    onRemove: function(map) {
+                         // Nothing to do here
+                    }
+               });
+               L.control.textbox2 = function(opts) { return new L.Control.textbox2(opts);}
+               L.control.textbox2({ position: 'topright' }).addTo(map);
+               
+               
+                $(".menucontent").height($(document).height() / 7.1);
+  window.addEventListener("resize", function() {
+    $(".menucontent").height($(document).height() / 7.1 );
+  });
+              
+			
+			$(".modalitelegende").height($(window).height() / 8);
+  window.addEventListener("resize", function() {
+    $(".modalitelegende").height($(window).height() / 8 );
+  });
+              
+			
+			
+			
+			
+			
+			// Ajout limite EMS 
+			
+			
+			var geojsonlimiteEMS = new L.GeoJSON.AJAX("sources/limitesEMS.geojson", {
+				style: { weight: 2.5, opacity: 1, color: "#1B1B1B"},
+				pane: 'EMS',
+			}).setZIndex(1).addTo(map);
+                
+                
+			// Ajout limites communes
+	 
+			var geojsonlimitesCOMMUNES = new L.GeoJSON.AJAX("sources/limitesCOMMUNES.geojson", {
+				style: { weight: 3, opacity: 0.75, color: "#c0c8cb"},
+				pane: 'communes',
+			}).setZIndex(1);
+                
+			
+			// Ajout limites QPV
+	 
+			var geojsonlimitesQPV = new L.GeoJSON.AJAX("sources/limitesQPV.geojson", {
+				style: { weight: 3, opacity: 0.75, color: "#4895d1"},
+				pane: 'QPV',
+			}).setZIndex(1);
+                
+			
+			// Ajout des lignes de train, tram et bus 
+			
+			
+			var geojsonlignesTRAIN = new L.GeoJSON.AJAX("sources/lignesTRAIN.geojson", {
+				style: { weight: 3.5, opacity: 1, dashArray: [5,5], color: "#1B1B1B"},
+				pane: 'train',
+			}).setZIndex(1);
+               
+			
+			
+			var geojsonlignesTRAM = new L.GeoJSON.AJAX("sources/lignesTRAM.geojson", {
+				style: { weight: 5, opacity: 1, color: "#1B1B1B"},
+				pane: 'tram',
+			}).setZIndex(1);
+               
+               
+               var geojsonlignesBUS = new L.GeoJSON.AJAX("sources/lignesBUS.geojson", {
+				style: { weight: 2, opacity: 0.75, color: "#595959"},
+				pane: 'bus',
+			}).setZIndex(1);
+               
+               
+			// Fonctions menu de gauche 
+			
+			function CAFHE() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>CAF&nbsp;Heyritz</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftCAFHE);
+				map.addLayer(geojsonnobusbrutCAFHE);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerCAFHE);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function RHENA() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Rhena&nbsp;clinic</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftRHENA);
+				map.addLayer(geojsonnobusbrutRHENA);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerRHENA);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function DJANG() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Espace&nbsp;Django&nbsp;venue</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftDJANG);
+				map.addLayer(geojsonnobusbrutDJANG);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerDJANG);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function GAREC() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Strasbourg&nbsp;main&nbsp;train&nbsp;station</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftGAREC);
+				map.addLayer(geojsonnobusbrutGAREC);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerGAREC);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function HOPIT() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Hautepierre&nbsp;hospital</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftHOPIT);
+				map.addLayer(geojsonnobusbrutHOPIT);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerHOPIT);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function VAISS() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Le&nbsp;Vaisseau</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftVAISS);
+				map.addLayer(geojsonnobusbrutVAISS);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerVAISS);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function MEDIA() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Malraux&nbsp;librairy</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftMEDIA);
+				map.addLayer(geojsonnobusbrutMEDIA);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerMEDIA);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function ORANG() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Orangerie&nbsp;gardens</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftORANG);
+				map.addLayer(geojsonnobusbrutORANG);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerORANG);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function INNOV() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Illkirch&nbsp;innovation&nbsp;park</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftINNOV);
+				map.addLayer(geojsonnobusbrutINNOV);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerINNOV);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function PNATU() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Ill-Bruche&nbsp;urban&nbsp;natural&nbsp;park</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftPNATU);
+				map.addLayer(geojsonnobusbrutPNATU);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerPNATU);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function PISCI() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Schiltigheim&nbsp;swimming-pool</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftPISCI);
+				map.addLayer(geojsonnobusbrutPISCI);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerPISCI);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function KLEBE() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Kleber&nbsp;square</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftKLEBE);
+				map.addLayer(geojsonnobusbrutKLEBE);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerKLEBE);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function STADE() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Meinau&nbsp;football&nbsp;stadium</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftSTADE);
+				map.addLayer(geojsonnobusbrutSTADE);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerSTADE);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function ZENIT() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Zenith&nbsp;venue</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftZENIT);
+				map.addLayer(geojsonnobusbrutZENIT);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerZENIT);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+			function ZCOMM() {
+				$("#headertitle").html('<h1>&#9632;&nbsp;Access&nbsp;to&nbsp;<b>Vendenheim&nbsp;commercial&nbsp;zone</b>&nbsp;by&nbsp;public&nbsp;transport&nbsp;&#9632;</h1>');
+				map.eachLayer(function(layer) {
+					if (!!layer.toGeoJSON) {
+						map.removeLayer(layer);
+					}
+				});
+				map.addLayer(geojsonleftZCOMM);
+				map.addLayer(geojsonnobusbrutZCOMM);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerZCOMM);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitescommunes").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			}
+			
+					
+               
+//L.control
+  //.sideBySide(L.featureGroup(leftLayer), //L.featureGroup(rightLayer))
+//  .addTo(map);
+               
+               
+/*
+               map.fitBounds([
+    [47.5, 7.3],
+    [49.0, 8.40]
+]);
+      */         
+               
+               L.control.fullscreen({
+  position: 'bottomleft', // change the position of the button can be topleft, topright, bottomright or bottomleft, default topleft
+  title: 'Plein ecran', // change the title of the button, default Full Screen
+  titleCancel: 'Retour', // change the title of the button when fullscreen is on, default Exit Full Screen
+  content: null, // change the content of the button, can be HTML, default null
+  forceSeparateButton: true, // force separate button to detach from zoom buttons, default false
+  forcePseudoFullscreen: false, // force use of pseudo full screen even if full screen API is available, default false
+  fullscreenElement: false // Dom element to render in full screen, false by default, fallback to map._container
+}).addTo(map);
+               
+               
+               
+   function openNav() {
+
+    document.getElementById("sidepanel").style.width = "30%";
+
+  
+    document.getElementById("leftmenu").style.visibility = "hidden";
+    document.getElementById("rightmenu").style.visibility = "hidden";
+        document.getElementById("map").style.left = "0%";
+       // document.getElementById("map").style.width = "85%";
+       
+
+}
+
+function closeNav() {
+
+    document.getElementById("sidepanel").style.width = "0";
+     document.getElementById("leftmenu").style.visibility = "visible";
+    document.getElementById("rightmenu").style.visibility = "visible";
+     document.getElementById("map").style.left = "15%";
+    // document.getElementById("map").style.width = "70%";
+
+}
+			
+			
+			
+              
+               function contrainteNOBUSbrutCAFHE() {		
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftCAFHE);
+				map.addLayer(geojsonnobusbrutCAFHE);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerCAFHE);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			};
+			
+               function contrainteNOBUSdiffCAFHE() {
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftCAFHE);
+				map.addLayer(geojsonnobusdiffCAFHE);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerCAFHE);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.addControl(rightlegend);
+			};
+			
+			function contrainteNOTRAMbrutCAFHE() {		
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftCAFHE);
+				map.addLayer(geojsonnotrambrutCAFHE);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerCAFHE);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			};
+			
+               function contrainteNOTRAMdiffCAFHE() {
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftCAFHE);
+				map.addLayer(geojsonnotramdiffCAFHE);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerCAFHE);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.addControl(rightlegend);
+			};
+			
+			function contrainteNOTRANSbrutCAFHE() {		
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftCAFHE);
+				map.addLayer(geojsonnotransbrutCAFHE);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerCAFHE);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			};
+			
+               function contrainteNOTRANSdiffCAFHE() {
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftCAFHE);
+				map.addLayer(geojsonnotransdiffCAFHE);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerCAFHE);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.addControl(rightlegend);
+			};
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			function contrainteNOBUSbrutRHENA() {		
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftRHENA);
+				map.addLayer(geojsonnobusbrutRHENA);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerRHENA);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			};
+			
+               function contrainteNOBUSdiffRHENA() {
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftRHENA);
+				map.addLayer(geojsonnobusdiffRHENA);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerRHENA);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.addControl(rightlegend);
+			};
+			
+			function contrainteNOTRAMbrutRHENA() {		
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftRHENA);
+				map.addLayer(geojsonnotrambrutRHENA);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerRHENA);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			};
+			
+               function contrainteNOTRAMdiffRHENA() {
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftRHENA);
+				map.addLayer(geojsonnotramdiffRHENA);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerRHENA);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.addControl(rightlegend);
+			};
+			
+			function contrainteNOTRANSbrutRHENA() {		
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftRHENA);
+				map.addLayer(geojsonnotransbrutRHENA);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerRHENA);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.removeControl(rightlegend);
+			};
+			
+               function contrainteNOTRANSdiffRHENA() {
+				map.eachLayer(function(layer) {if (!!layer.toGeoJSON) {map.removeLayer(layer);}});
+				map.addLayer(geojsonleftRHENA);
+				map.addLayer(geojsonnotransdiffRHENA);
+				map.addLayer(geojsonlimiteEMS);
+				map.addLayer(markerRHENA);
+				if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);}
+				if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);}
+				if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);}
+				if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);}
+				if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);}
+				map.addControl(rightlegend);
+			};
+			
+			
+			
+			
+			
+			
+			
+			
+               
+			
+			function functionlignesTRAIN() {if (document.getElementById("checkboxlignesTRAIN").checked) {map.addLayer(geojsonlignesTRAIN);} else {map.removeLayer(geojsonlignesTRAIN);}}
+			
+			function functionlignesBUS() {if (document.getElementById("checkboxlignesBUS").checked) {map.addLayer(geojsonlignesBUS);} else {map.removeLayer(geojsonlignesBUS);}}
+			
+               function functionlignesTRAM() {if (document.getElementById("checkboxlignesTRAM").checked) {map.addLayer(geojsonlignesTRAM);} else {map.removeLayer(geojsonlignesTRAM);}}
+			
+			function functionlimitesCOMMUNES() {if (document.getElementById("checkboxlimitesCOMMUNES").checked) {map.addLayer(geojsonlimitesCOMMUNES);} else {map.removeLayer(geojsonlimitesCOMMUNES);}}
+			
+			function functionlimitesQPV() {if (document.getElementById("checkboxlimitesQPV").checked) {map.addLayer(geojsonlimitesQPV);} else {map.removeLayer(geojsonlimitesQPV);}}
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			function initialbuttons() {
+				$("#contrainteNOBUSbrut").on('click', contrainteNOBUSbrutCAFHE)
+				$("#contrainteNOBUSdiff").on('click', contrainteNOBUSdiffCAFHE)
+				$("#contrainteNOTRAMbrut").on('click', contrainteNOTRAMbrutCAFHE)
+				$("#contrainteNOTRAMdiff").on('click', contrainteNOTRAMdiffCAFHE)
+				$("#contrainteNOTRANSbrut").on('click', contrainteNOTRANSbrutCAFHE)
+				$("#contrainteNOTRANSdiff").on('click', contrainteNOTRANSdiffCAFHE)
+			};
+			
+			$("#buttonCAFHE").on('click', updatebuttonrightCAFHE);
+			
+			function updatebuttonrightCAFHE() {
+				$("#contrainteNOBUSbrut").on('click', contrainteNOBUSbrutCAFHE)
+				$("#contrainteNOBUSdiff").on('click', contrainteNOBUSdiffCAFHE)
+				$("#contrainteNOTRAMbrut").on('click', contrainteNOTRAMbrutCAFHE)
+				$("#contrainteNOTRAMdiff").on('click', contrainteNOTRAMdiffCAFHE)
+				$("#contrainteNOTRANSbrut").on('click', contrainteNOTRANSbrutCAFHE)
+				$("#contrainteNOTRANSdiff").on('click', contrainteNOTRANSdiffCAFHE)
+			};
+			
+			
+			$("#buttonRHENA").on('click', updatebuttonrightRHENA);
+			
+			function updatebuttonrightRHENA() {
+				$("#contrainteNOBUSbrut").on('click', contrainteNOBUSbrutRHENA)
+				$("#contrainteNOBUSdiff").on('click', contrainteNOBUSdiffRHENA)
+				$("#contrainteNOTRAMbrut").on('click', contrainteNOTRAMbrutRHENA)
+				$("#contrainteNOTRAMdiff").on('click', contrainteNOTRAMdiffRHENA)
+				$("#contrainteNOTRANSbrut").on('click', contrainteNOTRANSbrutRHENA)
+				$("#contrainteNOTRANSdiff").on('click', contrainteNOTRANSdiffRHENA)
+			};
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+    </script>
+  </body>
+</html>
